@@ -14,10 +14,10 @@ export type ContactDetails = {
 export const contact: ContactDetails = {
   phone: '+917666201923',
   phoneDisplay: '+91 76662 01923',
-  email: 'hello@vandanamehandiartist.com',
+  email: 'vandanakanse317@gmail.com',
   whatsapp: '917666201923',
   whatsappUrl: 'https://wa.me/917666201923',
-  instagram: 'https://www.instagram.com/',
+  instagram: 'https://instagram.com/vandana_kanse_mehandi__artist/',
   address: 'Shrirampur, Maharashtra, India',
   googleMapsEmbed: 'https://maps.google.com/maps?q=Vandana%20Mehandi%20Artist,%20Shrirampur,%20Maharashtra&t=&z=15&ie=UTF8&iwloc=&output=embed',
   googleMapsLink: 'https://www.google.com/maps/search/?api=1&query=Vandana+Mehandi+Artist+Shrirampur+Maharashtra',
