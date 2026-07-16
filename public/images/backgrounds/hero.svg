@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900">
+  <defs>
+    <radialGradient id="bg" cx="72%" cy="42%" r="70%"><stop stop-color="#75432d"/><stop offset=".48" stop-color="#2b1710"/><stop offset="1" stop-color="#0c0705"/></radialGradient>
+    <pattern id="lace" width="180" height="180" patternUnits="userSpaceOnUse"><circle cx="90" cy="90" r="48" fill="none" stroke="#d4af37" stroke-opacity=".22" stroke-width="2"/><path d="M90 28c15 27 34 42 62 62-28 20-47 35-62 62-15-27-34-42-62-62 28-20 47-35 62-62Z" fill="none" stroke="#d4af37" stroke-opacity=".18"/><circle cx="90" cy="90" r="8" fill="#d4af37" fill-opacity=".2"/></pattern>
+    <filter id="blur"><feGaussianBlur stdDeviation="18"/></filter>
+  </defs>
+  <rect width="1600" height="900" fill="url(#bg)"/>
+  <rect x="690" width="910" height="900" fill="url(#lace)" opacity=".7"/>
+  <circle cx="1190" cy="400" r="270" fill="none" stroke="#d4af37" stroke-opacity=".28" stroke-width="3"/>
+  <circle cx="1190" cy="400" r="205" fill="none" stroke="#d4af37" stroke-opacity=".2" stroke-width="2"/>
+  <path d="M1190 135c55 116 143 198 260 265-117 67-205 149-260 265-55-116-143-198-260-265 117-67 205-149 260-265Z" fill="#120a07" fill-opacity=".5" stroke="#e0c06a" stroke-opacity=".45" stroke-width="4"/>
+  <g fill="none" stroke="#e0c06a" stroke-opacity=".55" stroke-width="3">
+    <path d="M1190 212c39 81 97 139 178 188-81 49-139 107-178 188-39-81-97-139-178-188 81-49 139-107 178-188Z"/>
+    <path d="M1190 280c24 52 63 91 115 120-52 29-91 68-115 120-24-52-63-91-115-120 52-29 91-68 115-120Z"/>
+  </g>
+  <circle cx="1190" cy="400" r="46" fill="#d4af37" fill-opacity=".18" filter="url(#blur)"/>
+</svg>
