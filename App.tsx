@@ -6,7 +6,7 @@ import { Gallery } from './components/Gallery';
 import { Hero } from './components/Hero';
 import { Logo } from './components/Logo';
 import { VisitUs } from './components/VisitUs';
-import { WelcomePopup } from './components/WelcomePopup';
+import { WelcomeModal } from './components/WelcomeModal';
 import { WhatsAppIcon } from './components/WhatsAppIcon';
 import { contact } from './data/contact';
 import { classTopics } from './data/siteData';
@@ -53,7 +53,7 @@ function MainSite() {
           </div>
         )}
       </nav>
-      <WelcomePopup />
+      <WelcomeModal />
       <main>
         <Hero />
         <Gallery />
