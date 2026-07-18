@@ -5,7 +5,6 @@ import { Contact } from './components/Contact';
 import { Gallery } from './components/Gallery';
 import { Hero } from './components/Hero';
 import { Logo } from './components/Logo';
-import { Services } from './components/Services';
 import { VisitUs } from './components/VisitUs';
 import { contact } from './data/contact';
 import { classTopics, testimonials, whyChooseUs } from './data/siteData';
@@ -62,8 +61,6 @@ export default function App() {
 
       <main>
         <Hero />
-        <Services />
-
         <section className="border-y border-white/10 bg-white/[0.04] py-20">
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             <div className="mb-12 text-center">
@@ -101,25 +98,6 @@ export default function App() {
         </section>
 
         <Gallery />
-
-        <section id="testimonials" className="section-shell bg-[#130b08]">
-          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-            <div className="mb-12 text-center">
-              <p className="section-kicker">Kind words</p>
-              <h2 className="section-title">Client Experiences</h2>
-            </div>
-            <div className="grid gap-6 md:grid-cols-2">
-              {testimonials.map((testimonial, index) => (
-                <blockquote key={testimonial.text} className="relative rounded-3xl border border-white/10 bg-white/[0.04] p-8 md:p-10">
-                  <span className="absolute right-7 top-3 font-serif text-7xl text-[#D4AF37]/20">“</span>
-                  <div className="mb-5 text-[#D4AF37]">★★★★★</div>
-                  <p className="relative text-lg leading-8 text-stone-200">{testimonial.text}</p>
-                  <footer className="mt-6 text-sm uppercase tracking-[0.2em] text-stone-500">Client note {index + 1}</footer>
-                </blockquote>
-              ))}
-            </div>
-          </div>
-        </section>
 
         <VisitUs />
         <About />
