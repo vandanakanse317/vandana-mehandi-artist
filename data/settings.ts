@@ -1,11 +1,10 @@
 export const siteSettings = {
   businessName: 'Vandana Mehandi Artist',
   navigation: [
-    { label: 'About', href: '#about' },
-    { label: 'Services', href: '#services' },
-    { label: 'Classes', href: '#classes' },
+    { label: 'Home', href: '#home' },
     { label: 'Gallery', href: '#gallery' },
-    { label: 'Testimonials', href: '#testimonials' },
+    { label: 'Classes', href: '#classes' },
     { label: 'Visit Us', href: '#visit-us' },
+    { label: 'Contact', href: '#contact' },
   ],
 };
