@@ -1,4 +1,6 @@
-import React, { useState, useEffect } from 'react';
+const fs = require('fs');
+
+const adminCode = `import { useState, useEffect } from 'react';
 import { LogOut, Upload, Image as ImageIcon, X, CheckCircle, Key } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import imageCompression from 'browser-image-compression';
@@ -17,78 +19,12 @@ import {
   sortableKeyboardCoordinates,
   rectSortingStrategy,
 } from '@dnd-kit/sortable';
-import { useSortable } from '@dnd-kit/sortable';
-import { CSS } from '@dnd-kit/utilities';
-import { Edit2 } from 'lucide-react';
-
-function SortableImage({ img, onDelete, onUpdateTitle, onReplace, onChangeCategory }: any) {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: img.id });
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-    opacity: isDragging ? 0.5 : 1,
-  };
-
-  return (
-    <div ref={setNodeRef} style={style} className="relative group rounded-xl overflow-hidden border border-white/10 bg-black/50 aspect-square">
-      <img src={img.url} alt={img.filename} className="w-full h-full object-cover" />
-      <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition duration-300 p-3 flex flex-col justify-between">
-        <div className="flex justify-between items-start">
-          <div {...attributes} {...listeners} className="cursor-grab p-1 bg-black/50 rounded text-stone-300 hover:text-white">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 9h16M4 15h16"/></svg>
-          </div>
-          <button 
-            onPointerDown={(e) => e.stopPropagation()} 
-            onClick={() => onDelete(img.id, img.filename)} 
-            className="p-1 bg-red-500/80 rounded text-white hover:bg-red-500"
-          >
-            <X className="h-4 w-4" />
-          </button>
-        </div>
-        <div className="space-y-2">
-          <div className="flex items-center gap-2">
-            <input 
-              type="text" 
-              defaultValue={img.title} 
-              onBlur={(e) => { if(e.target.value !== img.title) onUpdateTitle(img.id, e.target.value) }}
-              placeholder="Add title..."
-              className="w-full bg-black/50 border border-white/20 rounded px-2 py-1 text-xs text-white placeholder-white/50"
-            />
-          </div>
-          <select 
-            value={img.category} 
-            onChange={(e) => onChangeCategory(img.id, e.target.value)}
-            className="w-full bg-black/50 border border-white/20 rounded px-2 py-1 text-xs text-white focus:outline-none"
-          >
-            {CATEGORIES.map(cat => <option key={cat} value={cat}>{cat}</option>)}
-          </select>
-          <label className="flex items-center justify-center gap-1 w-full bg-white/10 hover:bg-white/20 border border-white/20 rounded px-2 py-1 cursor-pointer text-xs transition">
-            <Edit2 className="h-3 w-3" /> Replace
-            <input type="file" className="hidden" accept="image/*" onChange={(e) => {
-              if (e.target.files && e.target.files[0]) {
-                onReplace(img.id, e.target.files[0]);
-              }
-            }} />
-          </label>
-        </div>
-      </div>
-    </div>
-  );
-}
+import { SortableImage } from './SortableImage';
 import { SettingsEditor } from './SettingsEditor'; // Added for admin UI
 import { supabase } from '../src/lib/supabase';
 
 const CATEGORIES = ['Signature Mehndi Collection', 'Flower Decoration', 'Mehndi Classes'];
 const MEHNDI_CLASSES_ALBUMS = ['Batches', 'Student Practice', 'Student Mehndi'];
-
-const getBucketForCategory = (category: string) => {
-  switch (category) {
-    case 'Signature Mehndi Collection': return 'signature-mehandi';
-    case 'Flower Decoration': return 'flower-decoration';
-    case 'Mehndi Classes': return 'mehandi-classes';
-    default: return 'gallery';
-  }
-};
 
 export function Admin() {
   const [user, setUser] = useState<any | null>(null);
@@ -96,7 +32,6 @@ export function Admin() {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [imageToDelete, setImageToDelete] = useState<{id: string, url: string} | null>(null);
 
   const [images, setImages] = useState<GalleryImage[]>([]);
   const [selectedCat, setSelectedCat] = useState(CATEGORIES[0]);
@@ -113,11 +48,7 @@ export function Admin() {
   const [passwordMsg, setPasswordMsg] = useState('');
 
   const sensors = useSensors(
-    useSensor(PointerSensor, {
-      activationConstraint: {
-        distance: 5,
-      },
-    }),
+    useSensor(PointerSensor),
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
     })
@@ -143,11 +74,10 @@ export function Admin() {
   }, []);
 
   const fetchGallery = async () => {
-    const { data, error } = await supabase.from('gallery').select('*').order('created_at', { ascending: false });
+    const { data, error } = await supabase.from('gallery').select('*').order('order', { ascending: true });
     if (!error && data) {
       const formatted = data.map(doc => {
-        const bucket = getBucketForCategory(doc.category);
-        const { data: publicUrlData } = supabase.storage.from(bucket).getPublicUrl(doc.image_url);
+        const { data: publicUrlData } = supabase.storage.from('gallery').getPublicUrl(doc.image_url);
         return {
           id: doc.id,
           url: publicUrlData.publicUrl,
@@ -200,7 +130,7 @@ export function Admin() {
     if (e.target.files) {
       const files = Array.from(e.target.files);
       setFilesToUpload(prev => [...prev, ...files]);
-      const urls = files.map(file => URL.createObjectURL(file as unknown as Blob));
+      const urls = files.map(file => URL.createObjectURL(file));
       setPreviewUrls(prev => [...prev, ...urls]);
     }
   };
@@ -215,22 +145,23 @@ export function Admin() {
     try {
       let i = 0;
       for (const file of filesToUpload) {
-        const options = { maxSizeMB: 1, maxWidthOrHeight: 1920, useWebWorker: false };
-        const compressedFile = await imageCompression(file as File, options);
+        const options = { maxSizeMB: 1, maxWidthOrHeight: 1920, useWebWorker: true };
+        const compressedFile = await imageCompression(file, options);
         
-        const filename = `${Date.now()}-${Math.random().toString(36).substring(7)}.jpg`;
-        const storagePath = selectedCat === 'Mehndi Classes' ? `${selectedAlbum}/${filename}` : filename;
+        const filename = \`\${Date.now()}-\${Math.random().toString(36).substring(7)}.jpg\`;
+        const storagePath = \`\${selectedCat}\${selectedCat === 'Mehndi Classes' ? \`/\${selectedAlbum}\` : ''}/\${filename}\`;
         
-        const bucket = getBucketForCategory(selectedCat);
-        const { error: uploadError } = await supabase.storage.from(bucket).upload(storagePath, compressedFile);
-        if (uploadError) throw new Error(`Storage Error (${bucket}): ${uploadError.message}. Make sure the bucket has an RLS policy for inserts.`);
+        const { error: uploadError } = await supabase.storage.from('gallery').upload(storagePath, compressedFile);
+        if (uploadError) throw uploadError;
         
         const { error: dbError } = await supabase.from('gallery').insert([{
           category: selectedCat,
+          subCategory: selectedCat === 'Mehndi Classes' ? selectedAlbum : null,
           image_url: storagePath,
           title: '',
+          order: images.length + i,
         }]);
-        if (dbError) throw new Error(`Database Error (gallery): ${dbError.message}. Make sure the table has an RLS policy for inserts.`);
+        if (dbError) throw dbError;
         
         i++;
         setUploadProgress(Math.round((i / filesToUpload.length) * 100));
@@ -255,21 +186,17 @@ export function Admin() {
     setSuccessMsg('');
     setError('');
     try {
-      const img = images.find(i => i.id === id);
-      if (!img) throw new Error('Image not found');
-      const bucket = getBucketForCategory(img.category);
-
-      const options = { maxSizeMB: 1, maxWidthOrHeight: 1920, useWebWorker: false };
-      const compressedFile = await imageCompression(file as File, options);
+      const options = { maxSizeMB: 1, maxWidthOrHeight: 1920, useWebWorker: true };
+      const compressedFile = await imageCompression(file, options);
       
-      const filename = `${Date.now()}-${Math.random().toString(36).substring(7)}.jpg`;
-      const storagePath = `replaced/${filename}`;
+      const filename = \`\${Date.now()}-\${Math.random().toString(36).substring(7)}.jpg\`;
+      const storagePath = \`replaced/\${filename}\`;
       
-      const { error: uploadError } = await supabase.storage.from(bucket).upload(storagePath, compressedFile);
-      if (uploadError) throw new Error(`Storage Error (${bucket}): ${uploadError.message}. Make sure the bucket has an RLS policy for inserts.`);
+      const { error: uploadError } = await supabase.storage.from('gallery').upload(storagePath, compressedFile);
+      if (uploadError) throw uploadError;
       
       const { error: dbError } = await supabase.from('gallery').update({ image_url: storagePath }).eq('id', id);
-      if (dbError) throw new Error(`Database Error (gallery): ${dbError.message}. Make sure the table has an RLS policy for updates.`);
+      if (dbError) throw dbError;
       
       await fetchGallery();
       setSuccessMsg('Image replaced successfully!');
@@ -282,64 +209,27 @@ export function Admin() {
     }
   };
 
-  const requestDelete = (id: string, url: string) => {
-    setImageToDelete({ id, url });
-  };
-
-  const confirmDelete = async () => {
-    if (!imageToDelete) return;
-    const { id, url } = imageToDelete;
+  const handleDelete = async (id: string, url: string) => {
+    if (!window.confirm('Are you sure you want to delete this image?')) return;
     try {
       const img = images.find(img => img.id === id);
       if (img) {
-        const bucket = getBucketForCategory(img.category);
-        const { error: storageError } = await supabase.storage.from(bucket).remove([img.filename]);
-        if (storageError) throw new Error(`Storage Error (${bucket}): ${storageError.message}. Make sure the bucket has an RLS policy for deletes.`);
+        await supabase.storage.from('gallery').remove([img.filename]);
       }
-      const { error: dbError, data: deletedData } = await supabase.from('gallery').delete().eq('id', id).select();
-      if (dbError) throw new Error(`Database Error (gallery): ${dbError.message}. Make sure the table has an RLS policy for deletes.`);
-      
-      if (deletedData && deletedData.length === 0) {
-         console.warn("Delete affected 0 rows, possibly due to RLS.");
-      }
-      
-      await fetchGallery();
-      setSuccessMsg('Image deleted successfully!');
-      setTimeout(() => setSuccessMsg(''), 3000);
-    } catch (e: any) {
+      await supabase.from('gallery').delete().eq('id', id);
+      setImages(prev => prev.filter(i => i.id !== id));
+    } catch (e) {
       console.error('Delete failed:', e);
-      setError('Failed to delete image: ' + e.message);
-    } finally {
-      setImageToDelete(null);
+      alert('Failed to delete image');
     }
   };
 
   const handleUpdateTitle = async (id: string, newTitle: string) => {
     try {
       setImages(prev => prev.map(img => img.id === id ? { ...img, title: newTitle } : img));
-      const { error } = await supabase.from('gallery').update({ title: newTitle }).eq('id', id);
-      if (error) throw error;
-      setSuccessMsg('Title updated successfully!');
-      setTimeout(() => setSuccessMsg(''), 3000);
-    } catch (e: any) {
+      await supabase.from('gallery').update({ title: newTitle }).eq('id', id);
+    } catch (e) {
       console.error('Update title failed:', e);
-      setError('Failed to update title: ' + e.message);
-    }
-  };
-
-  const handleChangeCategory = async (id: string, newCategory: string) => {
-    try {
-      setImages(prev => prev.map(img => img.id === id ? { ...img, category: newCategory, subCategory: newCategory === 'Mehndi Classes' ? MEHNDI_CLASSES_ALBUMS[0] : undefined } : img));
-      const { error } = await supabase.from('gallery').update({ 
-        category: newCategory, 
-        subCategory: newCategory === 'Mehndi Classes' ? MEHNDI_CLASSES_ALBUMS[0] : null 
-      }).eq('id', id);
-      if (error) throw error;
-      setSuccessMsg('Category updated successfully!');
-      setTimeout(() => setSuccessMsg(''), 3000);
-    } catch (e: any) {
-      console.error('Change category failed:', e);
-      setError('Failed to update category: ' + e.message);
     }
   };
 
@@ -349,8 +239,21 @@ export function Admin() {
       const oldIndex = images.findIndex((img) => img.id === active.id);
       const newIndex = images.findIndex((img) => img.id === over.id);
       
-      const newArray = arrayMove(images, oldIndex, newIndex).map((img, idx) => ({ ...(img as any), order: idx }));
+      const newArray = arrayMove(images, oldIndex, newIndex).map((img, idx) => ({ ...img, order: idx }));
       setImages(newArray);
+      
+      try {
+        const updates = newArray.map(img => ({
+          id: img.id,
+          order: img.order,
+        }));
+        
+        for (const update of updates) {
+          await supabase.from('gallery').update({ order: update.order }).eq('id', update.id);
+        }
+      } catch (e) {
+        console.error('Reorder failed:', e);
+      }
     }
   };
 
@@ -414,7 +317,7 @@ export function Admin() {
                     <label className="block text-sm text-stone-400 mb-1">New Password</label>
                     <input type="password" value={newPassword} onChange={e => setNewPassword(e.target.value)} required minLength={6} className="w-full bg-black/30 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-[#D4AF37]" />
                   </div>
-                  {passwordMsg && <p className={`text-sm ${passwordMsg.includes('success') ? 'text-green-400' : 'text-red-400'}`}>{passwordMsg}</p>}
+                  {passwordMsg && <p className={\`text-sm \${passwordMsg.includes('success') ? 'text-green-400' : 'text-red-400'}\`}>{passwordMsg}</p>}
                   <button type="submit" className="px-6 py-2 bg-[#D4AF37] text-black font-medium rounded-xl hover:bg-[#e5c568] transition">Update</button>
                 </form>
               </div>
@@ -471,14 +374,14 @@ export function Admin() {
                 
                 {uploading && (
                   <div className="w-full bg-black/30 rounded-full h-2 mb-4 overflow-hidden border border-white/10">
-                    <div className="bg-[#D4AF37] h-2 rounded-full transition-all duration-300" style={{ width: `${uploadProgress}%` }}></div>
+                    <div className="bg-[#D4AF37] h-2 rounded-full transition-all duration-300" style={{ width: \`\${uploadProgress}%\` }}></div>
                   </div>
                 )}
                 
                 {error && <p className="text-red-400 text-sm mb-4">{error}</p>}
                 
                 <button onClick={handleUpload} disabled={uploading} className="bg-[#D4AF37] text-black px-6 py-2.5 rounded-xl font-medium hover:bg-[#e5c568] transition disabled:opacity-50">
-                  {uploading ? `Uploading ${uploadProgress}%...` : `Upload ${filesToUpload.length} Photo${filesToUpload.length > 1 ? 's' : ''}`}
+                  {uploading ? \`Uploading \${uploadProgress}%...\` : \`Upload \${filesToUpload.length} Photo\${filesToUpload.length > 1 ? 's' : ''}\`}
                 </button>
               </div>
             )}
@@ -496,7 +399,7 @@ export function Admin() {
         {/* Manage Section */}
         <section className="space-y-4">
           <div className="flex items-center justify-between">
-            <h2 className="text-lg font-medium text-[#D4AF37]">Manage: {selectedCat} {selectedCat === 'Mehndi Classes' && `> ${selectedAlbum}`}</h2>
+            <h2 className="text-lg font-medium text-[#D4AF37]">Manage: {selectedCat} {selectedCat === 'Mehndi Classes' && \`> \${selectedAlbum}\`}</h2>
             <span className="text-sm text-stone-400">{displayedImages.length} items</span>
           </div>
           
@@ -504,7 +407,7 @@ export function Admin() {
             <SortableContext items={displayedImages.map(img => img.id)} strategy={rectSortingStrategy}>
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
                 {displayedImages.map(img => (
-                  <SortableImage key={img.id} img={img} onDelete={requestDelete} onUpdateTitle={handleUpdateTitle} onReplace={handleReplace} onChangeCategory={handleChangeCategory} />
+                  <SortableImage key={img.id} img={img} onDelete={handleDelete} onUpdateTitle={handleUpdateTitle} onReplace={handleReplace} />
                 ))}
                 {displayedImages.length === 0 && (
                   <div className="col-span-full py-12 text-center text-stone-500 border border-dashed border-white/10 rounded-2xl">
@@ -516,21 +419,9 @@ export function Admin() {
           </DndContext>
         </section>
       </main>
-
-      <AnimatePresence>
-        {imageToDelete && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
-            <motion.div initial={{ scale: 0.95 }} animate={{ scale: 1 }} exit={{ scale: 0.95 }} className="bg-[#1a0f0a] border border-white/10 p-6 rounded-2xl shadow-2xl max-w-sm w-full">
-              <h3 className="text-xl font-serif text-white mb-2">Delete Image</h3>
-              <p className="text-stone-400 mb-6">Are you sure you want to delete this image? This action cannot be undone.</p>
-              <div className="flex justify-end gap-3">
-                <button onClick={() => setImageToDelete(null)} className="px-4 py-2 rounded-xl border border-white/20 text-white hover:bg-white/10 transition">Cancel</button>
-                <button onClick={confirmDelete} className="px-4 py-2 rounded-xl bg-red-600 text-white hover:bg-red-700 transition">Delete</button>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
     </div>
   );
 }
+`;
+
+fs.writeFileSync('components/Admin.tsx', adminCode);

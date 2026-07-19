@@ -1,6 +1,7 @@
 import { motion } from 'motion/react';
 import { ArrowRight, Leaf } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { useSettings } from '../contexts/SettingsContext'; // trigger sync
 
 function Sparkles() {
   const [sparkles, setSparkles] = useState<{ id: number, size: number, top: string, left: string, duration: number, delay: number }[]>([]);
@@ -42,6 +43,7 @@ function Sparkles() {
 }
 
 export function Hero() {
+  const { settings } = useSettings();
   return (
     <section id="home" className="relative flex min-h-[760px] items-center overflow-hidden pt-28">
       <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: 'url("/images/hero/hero.JPG")' }} />
@@ -53,11 +55,10 @@ export function Hero() {
           <div className="mb-7 inline-flex items-center gap-2 rounded-full border border-[#D4AF37]/30 bg-black/30 px-4 py-2 text-sm text-[#e5c568] backdrop-blur-md">
             <Leaf className="h-4 w-4" /> Professional mehandi in Shrirampur
           </div>
-          <h1 className="font-serif text-5xl font-semibold leading-[1.05] text-white sm:text-6xl lg:text-8xl">
-            Beautiful stories,
-            <span className="block italic text-[#D4AF37]">drawn by hand.</span>
+          <h1 className="font-serif text-5xl font-semibold leading-[1.05] text-white sm:text-6xl lg:text-8xl whitespace-pre-line">
+            {settings.heroHeading}
           </h1>
-          <p className="mt-7 max-w-2xl text-lg leading-8 text-stone-300">Elegant mehandi for weddings, engagements, festivals, baby showers, and every celebration that deserves a memorable detail.</p>
+          <p className="mt-7 max-w-2xl text-lg leading-8 text-stone-300 whitespace-pre-line">{settings.heroSubtitle}</p>
           <div className="mt-10 flex flex-col gap-4 sm:flex-row">
             <a href="#contact" className="inline-flex items-center justify-center gap-2 rounded-full bg-[#D4AF37] px-8 py-4 font-semibold text-[#1a0f0a] transition hover:bg-[#e5c568]">Book an Appointment <ArrowRight className="h-4 w-4" /></a>
             <a href="#gallery" className="inline-flex items-center justify-center rounded-full border border-white/25 bg-white/5 px-8 py-4 font-semibold text-white backdrop-blur-md transition hover:bg-white/10">View Our Work</a>

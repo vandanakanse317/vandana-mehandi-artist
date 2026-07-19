@@ -1,8 +1,7 @@
 import { useEffect, useState, useMemo, type MouseEvent } from 'react';
 import { ChevronLeft, ChevronRight, X, ZoomIn, ZoomOut } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
-import { db } from '../src/lib/firebase';
-import { collection, onSnapshot } from 'firebase/firestore';
+import { supabase } from '../src/lib/supabase';
 
 export type GalleryImage = {
   id: string;
@@ -15,29 +14,52 @@ export type GalleryImage = {
 
 const TABS = ['Signature Mehndi Collection', 'Flower Decoration', 'Mehndi Classes'] as const;
 
+const getBucketForCategory = (category: string) => {
+  switch (category) {
+    case 'Signature Mehndi Collection': return 'signature-mehandi';
+    case 'Flower Decoration': return 'flower-decoration';
+    case 'Mehndi Classes': return 'mehandi-classes';
+    default: return 'gallery';
+  }
+};
+
 export function Gallery() {
   const [activeTab, setActiveTab] = useState<typeof TABS[number]>('Signature Mehndi Collection');
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
   const [isZoomed, setIsZoomed] = useState(false);
   const [allImages, setAllImages] = useState<GalleryImage[]>([]);
 
-  useEffect(() => {
-    if (!db) {
-      console.warn("Firebase is not configured. Gallery will not load.");
-      return;
-    }
-    const unsubscribe = onSnapshot(collection(db, 'gallery'), (snapshot) => {
-      const data: GalleryImage[] = [];
-      snapshot.forEach((doc) => {
-        data.push({ id: doc.id, ...doc.data() } as GalleryImage);
+    useEffect(() => {
+    const fetchImages = async () => {
+      const { data, error } = await supabase
+        .from('gallery')
+        .select('*')
+        .order('created_at', { ascending: false });
+        
+      if (error) {
+        console.error("Error fetching gallery images: ", error);
+        return;
+      }
+      
+      const formatted = data.map(doc => {
+        const bucket = getBucketForCategory(doc.category);
+        const { data: publicUrlData } = supabase.storage.from(bucket).getPublicUrl(doc.image_url);
+        
+        return {
+          id: doc.id,
+          url: publicUrlData.publicUrl,
+          category: doc.category,
+          subCategory: doc.subCategory || undefined,
+          filename: doc.image_url,
+          title: doc.title,
+          order: doc.order || 0,
+        };
       });
-      data.sort((a, b) => (a.order || 0) - (b.order || 0));
-      setAllImages(data);
-    }, (error) => {
-      console.error("Error fetching gallery images: ", error);
-    });
-
-    return () => unsubscribe();
+      
+      setAllImages(formatted as any);
+    };
+    
+    fetchImages();
   }, []);
 
   // Get images for the current active tab

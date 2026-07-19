@@ -1,8 +1,9 @@
 import { Instagram, MapPin, Phone } from 'lucide-react';
-import { contact } from '../data/contact';
+import { useSettings } from '../contexts/SettingsContext'; // Trigger sync
 import { WhatsAppIcon } from './WhatsAppIcon';
 
 export function VisitUs() {
+  const { settings } = useSettings();
   return (
     <section id="visit-us" className="section-shell">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -20,7 +21,7 @@ export function VisitUs() {
             <div className="relative h-[400px] w-full overflow-hidden rounded-2xl lg:h-full">
               <iframe
                 title="Google Maps Location"
-                src={contact.googleMapsEmbed}
+                src={settings.googleMapsEmbed}
                 width="100%"
                 height="100%"
                 style={{ border: 0 }}
@@ -41,21 +42,21 @@ export function VisitUs() {
                 <MapPin className="mt-1 h-6 w-6 shrink-0 text-[#D4AF37]" />
                 <div>
                   <h4 className="mb-1 font-medium text-white">Address</h4>
-                  <p className="leading-relaxed">{contact.address}</p>
+                  <p className="leading-relaxed">{settings.address}</p>
                 </div>
               </div>
             </div>
 
             <div className="grid gap-4 sm:grid-cols-2">
               <a
-                href={`tel:${contact.phone}`}
+                href={`tel:${settings.phone}`}
                 className="flex items-center justify-center gap-3 rounded-2xl border border-white/10 bg-white/5 px-6 py-4 font-medium text-white transition hover:bg-white/10 hover:text-[#D4AF37]"
               >
                 <Phone className="h-5 w-5" />
                 Call Us
               </a>
               <a
-                href={`${contact.whatsappUrl}?text=${encodeURIComponent('Hi, I would like to inquire about Mehandi services.')}`}
+                href={`${settings.whatsappUrl}?text=${encodeURIComponent('Hi, I would like to inquire about Mehandi services.')}`}
                 target="_blank"
                 rel="noreferrer"
                 className="flex items-center justify-center gap-3 rounded-2xl bg-[#25D366]/10 px-6 py-4 font-medium text-[#25D366] transition hover:bg-[#25D366]/20"
@@ -64,7 +65,7 @@ export function VisitUs() {
                 WhatsApp
               </a>
               <a
-                href={contact.instagram}
+                href={settings.instagram}
                 target="_blank"
                 rel="noreferrer"
                 className="flex items-center justify-center gap-3 rounded-2xl border border-white/10 bg-gradient-to-tr from-[#b98543]/20 via-[#a33d55]/20 to-[#74355f]/20 px-6 py-4 font-medium text-white transition hover:border-[#b98543]/50"
@@ -73,7 +74,7 @@ export function VisitUs() {
                 Instagram
               </a>
               <a
-                href={contact.googleDirections}
+                href={settings.googleDirections}
                 target="_blank"
                 rel="noreferrer"
                 className="flex items-center justify-center gap-3 rounded-2xl bg-[#D4AF37] px-6 py-4 font-medium text-[#1a0f0a] transition hover:bg-[#e5c568]"

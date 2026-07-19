@@ -7,13 +7,14 @@ import { Hero } from './components/Hero';
 import { Logo } from './components/Logo';
 import { VisitUs } from './components/VisitUs';
 import { WhatsAppIcon } from './components/WhatsAppIcon';
-import { contact } from './data/contact';
 import { classTopics } from './data/siteData';
 import { siteSettings } from './data/settings';
 import { Admin } from './components/Admin';
+import { SettingsProvider, useSettings } from './contexts/SettingsContext'; // Contexts
 
 function MainSite() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const { settings } = useSettings();
 
   return (
     <div className="min-h-screen overflow-x-hidden bg-[#1a0f0a] text-white">
@@ -42,6 +43,7 @@ function MainSite() {
             {isMenuOpen ? <X /> : <Menu />}
           </button>
         </div>
+
         {isMenuOpen && (
           <div className="border-t border-white/10 bg-[#0a0604] px-4 py-4 md:hidden">
             {siteSettings.navigation.map((item) => (
@@ -52,9 +54,14 @@ function MainSite() {
           </div>
         )}
       </nav>
+
       <main>
         <Hero />
+        
+        
+
         <Gallery />
+
         <section id="classes" className="section-shell henna-pattern">
           <div className="relative z-10 mx-auto grid max-w-7xl gap-12 px-4 sm:px-6 lg:grid-cols-[0.8fr_1.2fr] lg:px-8">
             <div>
@@ -73,14 +80,16 @@ function MainSite() {
             </div>
           </div>
         </section>
+
         <VisitUs />
         <Contact />
       </main>
+
       <div className="fixed bottom-5 right-5 z-40 flex flex-col gap-3">
-        <a href={contact.instagram} target="_blank" rel="noreferrer" className="grid h-14 w-14 place-items-center rounded-full bg-gradient-to-tr from-[#b98543] via-[#a33d55] to-[#74355f] shadow-xl transition hover:-translate-y-1" aria-label="Instagram">
+        <a href={settings.instagram} target="_blank" rel="noreferrer" className="grid h-14 w-14 place-items-center rounded-full bg-gradient-to-tr from-[#b98543] via-[#a33d55] to-[#74355f] shadow-xl transition hover:-translate-y-1" aria-label="Instagram">
           <Instagram className="h-6 w-6" />
         </a>
-        <a href={`${contact.whatsappUrl}?text=${encodeURIComponent('Hi, I would like to inquire about Mehandi services.')}`} target="_blank" rel="noreferrer" className="grid h-14 w-14 place-items-center rounded-full bg-[#25D366] shadow-xl transition hover:-translate-y-1 hover:bg-[#20b858]" aria-label="WhatsApp">
+        <a href={`${settings.whatsappUrl}?text=${encodeURIComponent('Hi, I would like to inquire about Mehandi services.')}`} target="_blank" rel="noreferrer" className="grid h-14 w-14 place-items-center rounded-full bg-[#25D366] shadow-xl transition hover:-translate-y-1 hover:bg-[#20b858]" aria-label="WhatsApp">
           <WhatsAppIcon className="h-7 w-7" />
         </a>
       </div>
@@ -90,11 +99,13 @@ function MainSite() {
 
 export default function App() {
   return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="/admin" element={<Admin />} />
-        <Route path="*" element={<MainSite />} />
-      </Routes>
-    </BrowserRouter>
+    <SettingsProvider>
+      <BrowserRouter>
+        <Routes>
+          <Route path="/admin" element={<Admin />} />
+          <Route path="*" element={<MainSite />} />
+        </Routes>
+      </BrowserRouter>
+    </SettingsProvider>
   );
 }
