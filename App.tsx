@@ -1,3 +1,7 @@
+import { FullGalleryPage } from './components/FullGalleryPage';
+import { ClassesGallery } from './components/ClassesGallery';
+import { Videos } from './components/Videos';
+import { VideosPage } from './components/VideosPage';
 import { useState } from 'react';
 import { Instagram, Menu, X } from 'lucide-react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
@@ -7,9 +11,12 @@ import { Hero } from './components/Hero';
 import { Logo } from './components/Logo';
 import { VisitUs } from './components/VisitUs';
 import { WhatsAppIcon } from './components/WhatsAppIcon';
-import { classTopics } from './data/siteData';
 import { siteSettings } from './data/settings';
 import { Admin } from './components/Admin';
+import { Products } from './components/Products';
+import { Classes } from './components/Classes';
+import { ProductsPage } from './components/ProductsPage';
+import { ProductDetailsPage } from './components/ProductDetailsPage';
 import { SettingsProvider, useSettings } from './contexts/SettingsContext'; // Contexts
 
 function MainSite() {
@@ -61,25 +68,10 @@ function MainSite() {
         
 
         <Gallery />
+        <Products />
+        <Videos />
 
-        <section id="classes" className="section-shell henna-pattern">
-          <div className="relative z-10 mx-auto grid max-w-7xl gap-12 px-4 sm:px-6 lg:grid-cols-[0.8fr_1.2fr] lg:px-8">
-            <div>
-              <p className="section-kicker">Learn the craft</p>
-              <h2 className="section-title text-left">Mehandi Classes</h2>
-              <p className="mt-6 max-w-lg leading-8 text-stone-300">Practical, patient instruction for beginners and developing artists, from confident cone control to complete bridal layouts.</p>
-              <a href="#contact" className="mt-8 inline-flex rounded-full bg-[#D4AF37] px-7 py-3.5 font-semibold text-[#1a0f0a] transition hover:bg-[#e5c568]">Ask About Classes</a>
-            </div>
-            <div className="grid gap-3 sm:grid-cols-2">
-              {classTopics.map((topic, index) => (
-                <div key={topic} className="flex items-center gap-4 rounded-2xl border border-white/10 bg-black/30 p-5 backdrop-blur-sm">
-                  <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full border border-[#D4AF37]/50 text-sm text-[#D4AF37]">{index + 1}</span>
-                  <span className="text-stone-200">{topic}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
+        <Classes />
 
         <VisitUs />
         <Contact />
@@ -103,6 +95,11 @@ export default function App() {
       <BrowserRouter>
         <Routes>
           <Route path="/admin" element={<Admin />} />
+          <Route path="/gallery" element={<FullGalleryPage type="portfolio" />} />
+          <Route path="/classes-gallery" element={<FullGalleryPage type="classes" />} />
+          <Route path="/videos" element={<VideosPage />} />
+          <Route path="/products" element={<ProductsPage />} />
+          <Route path="/product/:id" element={<ProductDetailsPage />} />
           <Route path="*" element={<MainSite />} />
         </Routes>
       </BrowserRouter>

@@ -153,6 +153,138 @@ export function SettingsEditor() {
           </div>
         </div>
 
+        
+        <div className="space-y-4">
+          <h3 className="text-sm font-semibold text-white border-b border-white/10 pb-2">Profile Header (Gallery)</h3>
+          <div className="grid sm:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm text-stone-400 mb-1">Profile Name</label>
+              <input 
+                type="text" 
+                value={formData.profileName || ''} 
+                onChange={e => handleChange('profileName', e.target.value)} 
+                className="w-full bg-black/30 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-[#D4AF37]" 
+              />
+            </div>
+            <div>
+              <label className="block text-sm text-stone-400 mb-1">Designation</label>
+              <input 
+                type="text" 
+                value={formData.profileDesignation || ''} 
+                onChange={e => handleChange('profileDesignation', e.target.value)} 
+                className="w-full bg-black/30 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-[#D4AF37]" 
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm text-stone-400 mb-1">Profile Cover URL</label>
+            <input 
+              type="text" 
+              value={formData.profileCoverUrl || ''} 
+              onChange={e => handleChange('profileCoverUrl', e.target.value)} 
+              placeholder="https://..."
+              className="w-full bg-black/30 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-[#D4AF37]" 
+            />
+          </div>
+          <div>
+            <label className="block text-sm text-stone-400 mb-1">WhatsApp Number (For Gallery)</label>
+            <input 
+              type="text" 
+              value={formData.profileWhatsapp || ''} 
+              onChange={e => handleChange('profileWhatsapp', e.target.value)} 
+              placeholder="https://wa.me/..."
+              className="w-full bg-black/30 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-[#D4AF37]" 
+            />
+          </div>
+          <div>
+            <label className="block text-sm text-stone-400 mb-1">Profile Photo URL</label>
+            <input 
+              type="text" 
+              value={formData.profilePhotoUrl || ''} 
+              onChange={e => handleChange('profilePhotoUrl', e.target.value)} 
+              placeholder="https://..."
+              className="w-full bg-black/30 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-[#D4AF37]" 
+            />
+          </div>
+          <div>
+            <label className="block text-sm text-stone-400 mb-1">Short Bio</label>
+            <textarea 
+              value={formData.profileBio || ''} 
+              onChange={e => handleChange('profileBio', e.target.value)} 
+              rows={2}
+              className="w-full bg-black/30 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-[#D4AF37]" 
+            />
+          </div>
+        </div>
+
+        
+        <div className="space-y-4">
+          <h3 className="text-sm font-semibold text-white border-b border-white/10 pb-2">Main Gallery Settings</h3>
+          <div className="flex items-center gap-2">
+            <input 
+              type="checkbox" 
+              checked={formData.galleryEnabled !== false} 
+              onChange={e => handleChange('galleryEnabled', e.target.checked)} 
+              className="w-4 h-4"
+            />
+            <label className="text-sm text-stone-400">Enable Main Gallery Section</label>
+          </div>
+          <div className="grid sm:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm text-stone-400 mb-1">Heading</label>
+              <input 
+                type="text" 
+                value={formData.galleryHeading || ''} 
+                onChange={e => handleChange('galleryHeading', e.target.value)} 
+                className="w-full bg-black/30 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-[#D4AF37]" 
+              />
+            </div>
+            <div>
+              <label className="block text-sm text-stone-400 mb-1">Description</label>
+              <input 
+                type="text" 
+                value={formData.galleryDescription || ''} 
+                onChange={e => handleChange('galleryDescription', e.target.value)} 
+                className="w-full bg-black/30 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-[#D4AF37]" 
+              />
+            </div>
+          </div>
+        </div>
+        
+        <div className="space-y-4">
+          <h3 className="text-sm font-semibold text-white border-b border-white/10 pb-2">Classes Gallery Settings</h3>
+          <div className="flex items-center gap-2">
+            <input 
+              type="checkbox" 
+              checked={formData.classesGalleryEnabled !== false} 
+              onChange={e => handleChange('classesGalleryEnabled', e.target.checked)} 
+              className="w-4 h-4"
+            />
+            <label className="text-sm text-stone-400">Enable Classes Gallery Section</label>
+          </div>
+          <div className="grid sm:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm text-stone-400 mb-1">Heading</label>
+              <input 
+                type="text" 
+                value={formData.classesGalleryHeading || ''} 
+                onChange={e => handleChange('classesGalleryHeading', e.target.value)} 
+                className="w-full bg-black/30 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-[#D4AF37]" 
+              />
+            </div>
+            <div>
+              <label className="block text-sm text-stone-400 mb-1">Description</label>
+              <input 
+                type="text" 
+                value={formData.classesGalleryDescription || ''} 
+                onChange={e => handleChange('classesGalleryDescription', e.target.value)} 
+                className="w-full bg-black/30 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-[#D4AF37]" 
+              />
+            </div>
+          </div>
+        </div>
+
         {error && <p className="text-red-400 text-sm">{error}</p>}
         
         <AnimatePresence>

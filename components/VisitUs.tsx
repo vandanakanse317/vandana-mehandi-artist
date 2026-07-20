@@ -5,8 +5,10 @@ import { WhatsAppIcon } from './WhatsAppIcon';
 export function VisitUs() {
   const { settings } = useSettings();
   return (
-    <section id="visit-us" className="section-shell">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+    <section id="visit-us" className="section-shell bg-[#1a0f0a] relative">
+      <div className="absolute inset-0 bg-cover bg-center opacity-[0.04] mix-blend-screen pointer-events-none blur-[2px]" style={{ backgroundImage: 'url("https://images.unsplash.com/photo-1544717297-fa95b6ee9643?auto=format&fit=crop&q=80")' }} />
+      <div className="absolute inset-0 bg-gradient-to-b from-[#1a0f0a] via-transparent to-[#1a0f0a] pointer-events-none z-0" />
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 relative z-10">
         <div className="mb-12 text-center">
           <p className="section-kicker">Find Us</p>
           <h2 className="section-title">Visit Us</h2>

@@ -46,8 +46,9 @@ export function Hero() {
   const { settings } = useSettings();
   return (
     <section id="home" className="relative flex min-h-[760px] items-center overflow-hidden pt-28">
-      <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: 'url("/images/hero/hero.JPG")' }} />
-      <div className="absolute inset-0 bg-gradient-to-r from-[#090504]/95 via-[#1a0f0a]/82 to-[#1a0f0a]/40" />
+      <div className="absolute inset-0 bg-[#0a0604]" />
+      <div className="absolute inset-0 bg-cover bg-center opacity-[0.08] mix-blend-screen pointer-events-none blur-[2px]" style={{ backgroundImage: 'url("https://images.unsplash.com/photo-1511285560929-80b456fea0bc?auto=format&fit=crop&q=80")' }} />
+      <div className="absolute inset-0 bg-gradient-to-b from-[#0a0604]/50 via-transparent to-[#0a0604] pointer-events-none z-0" />
       <div className="absolute inset-0 opacity-30 [background-image:radial-gradient(circle_at_70%_35%,rgba(212,175,55,.4),transparent_25%)]" />
       <Sparkles />
       <motion.div initial={{ opacity: 0, y: 28 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8 }} className="relative z-10 mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">

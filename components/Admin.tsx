@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { LogOut, Upload, Image as ImageIcon, X, CheckCircle, Key } from 'lucide-react';
+import { LogOut, Upload, Image as ImageIcon, X, CheckCircle, Key, Trash2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import imageCompression from 'browser-image-compression';
 import { GalleryImage } from './Gallery';
@@ -21,7 +21,7 @@ import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { Edit2 } from 'lucide-react';
 
-function SortableImage({ img, onDelete, onUpdateTitle, onReplace, onChangeCategory }: any) {
+function SortableImage({ img, onDelete, onUpdateTitle, onReplace, onChangeCategory, onToggleFeatured, categories, isSelected, onToggleSelect }: any) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: img.id });
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -32,8 +32,16 @@ function SortableImage({ img, onDelete, onUpdateTitle, onReplace, onChangeCatego
   return (
     <div ref={setNodeRef} style={style} className="relative group rounded-xl overflow-hidden border border-white/10 bg-black/50 aspect-square">
       <img src={img.url} alt={img.filename} className="w-full h-full object-cover" />
+      <div className={`absolute top-2 left-2 z-20 transition-opacity ${isSelected ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
+        <input 
+          type="checkbox" 
+          checked={isSelected} 
+          onChange={() => onToggleSelect(img.id)} 
+          className="w-5 h-5 cursor-pointer rounded border-white/30 bg-black/50 text-[#D4AF37] focus:ring-[#D4AF37]" 
+        />
+      </div>
       <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition duration-300 p-3 flex flex-col justify-between">
-        <div className="flex justify-between items-start">
+        <div className="flex justify-between items-start pl-8">
           <div {...attributes} {...listeners} className="cursor-grab p-1 bg-black/50 rounded text-stone-300 hover:text-white">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 9h16M4 15h16"/></svg>
           </div>
@@ -60,8 +68,12 @@ function SortableImage({ img, onDelete, onUpdateTitle, onReplace, onChangeCatego
             onChange={(e) => onChangeCategory(img.id, e.target.value)}
             className="w-full bg-black/50 border border-white/20 rounded px-2 py-1 text-xs text-white focus:outline-none"
           >
-            {CATEGORIES.map(cat => <option key={cat} value={cat}>{cat}</option>)}
+            {categories.map((cat: string) => <option key={cat} value={cat}>{cat}</option>)}
           </select>
+          <label className="flex items-center gap-2 cursor-pointer bg-black/50 border border-white/20 rounded px-2 py-1">
+            <input type="checkbox" checked={img.is_featured !== false} onChange={() => onToggleFeatured(img.id, img.is_featured)} className="w-3 h-3 rounded text-[#D4AF37]" />
+            <span className="text-[10px] text-stone-300">Featured</span>
+          </label>
           <label className="flex items-center justify-center gap-1 w-full bg-white/10 hover:bg-white/20 border border-white/20 rounded px-2 py-1 cursor-pointer text-xs transition">
             <Edit2 className="h-3 w-3" /> Replace
             <input type="file" className="hidden" accept="image/*" onChange={(e) => {
@@ -75,10 +87,15 @@ function SortableImage({ img, onDelete, onUpdateTitle, onReplace, onChangeCatego
     </div>
   );
 }
-import { SettingsEditor } from './SettingsEditor'; // Added for admin UI
+import { SettingsEditor } from './SettingsEditor';
+import { ProductsManager } from './ProductsManager';
+import { ClassesManager } from './ClassesManager';
+import { CollectionsEditor } from './CollectionsEditor';
+import { useSettings } from '../contexts/SettingsContext';
+import { VideosManager } from './VideosManager'; // Added for admin UI
 import { supabase } from '../src/lib/supabase';
 
-const CATEGORIES = ['Signature Mehndi Collection', 'Flower Decoration', 'Mehndi Classes'];
+
 const MEHNDI_CLASSES_ALBUMS = ['Batches', 'Student Practice', 'Student Mehndi'];
 
 const getBucketForCategory = (category: string) => {
@@ -91,6 +108,8 @@ const getBucketForCategory = (category: string) => {
 };
 
 export function Admin() {
+  const { settings } = useSettings();
+  const CATEGORIES = settings?.portfolio_collections ? [...settings.portfolio_collections.map(c => c.name), 'Classes'] : ['Classes'];
   const [user, setUser] = useState<any | null>(null);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -99,8 +118,38 @@ export function Admin() {
   const [imageToDelete, setImageToDelete] = useState<{id: string, url: string} | null>(null);
 
   const [images, setImages] = useState<GalleryImage[]>([]);
-  const [selectedCat, setSelectedCat] = useState(CATEGORIES[0]);
+  const [selectedImages, setSelectedImages] = useState<string[]>([]);
+  
+  const handleToggleSelect = (id: string) => {
+    setSelectedImages(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]);
+  };
+
+  const handleSelectAll = () => {
+    if (selectedImages.length === images.length) setSelectedImages([]);
+    else setSelectedImages(images.map(img => img.id));
+  };
+
+  const handleBulkDelete = async () => {
+    if (!confirm(`Are you sure you want to delete ${selectedImages.length} images?`)) return;
+    try {
+      const imgsToDelete = images.filter(img => selectedImages.includes(img.id));
+      for (const img of imgsToDelete) {
+        let bucket = getBucketForCategory(img.category);
+        await supabase.storage.from(bucket).remove([img.filename]);
+        await supabase.from('gallery').delete().eq('id', img.id);
+      }
+      setImages(prev => prev.filter(img => !selectedImages.includes(img.id)));
+      setSelectedImages([]);
+    } catch (err: any) {
+      setError(err.message);
+    }
+  };
+
+  const [selectedCat, setSelectedCat] = useState('Classes');
+  useEffect(() => { if (CATEGORIES.length > 0 && selectedCat === 'Classes') setSelectedCat(CATEGORIES[0]); }, [CATEGORIES]);
+  
   const [selectedAlbum, setSelectedAlbum] = useState(MEHNDI_CLASSES_ALBUMS[0]);
+  useEffect(() => { setSelectedImages([]); }, [selectedCat, selectedAlbum]);
   
   const [filesToUpload, setFilesToUpload] = useState<File[]>([]);
   const [previewUrls, setPreviewUrls] = useState<string[]>([]);
@@ -156,6 +205,7 @@ export function Admin() {
           filename: doc.image_url,
           title: doc.title,
           order: doc.order || 0,
+          is_featured: doc.is_featured !== false,
           uploadDate: doc.created_at,
         };
       });
@@ -311,6 +361,17 @@ export function Admin() {
       setError('Failed to delete image: ' + e.message);
     } finally {
       setImageToDelete(null);
+    }
+  };
+
+  const handleToggleFeatured = async (id: string, current: boolean) => {
+    try {
+      const nextVal = current === false ? true : false;
+      setImages(prev => prev.map(img => img.id === id ? { ...img, is_featured: nextVal } : img));
+      await supabase.from('gallery').update({ is_featured: nextVal }).eq('id', id);
+    } catch (e: any) {
+      console.error(e);
+      setError('Failed to update featured status: ' + e.message);
     }
   };
 
@@ -500,11 +561,35 @@ export function Admin() {
             <span className="text-sm text-stone-400">{displayedImages.length} items</span>
           </div>
           
+          {images.length > 0 && (
+            <div className="flex items-center justify-between mb-4 bg-white/5 p-3 rounded-xl border border-white/10">
+              <label className="flex items-center gap-2 cursor-pointer text-stone-300 hover:text-white">
+                <input 
+                  type="checkbox" 
+                  checked={selectedImages.length === images.length && images.length > 0} 
+                  onChange={handleSelectAll} 
+                  className="w-4 h-4 rounded border-white/30 bg-black/50 text-[#D4AF37] focus:ring-[#D4AF37]" 
+                />
+                Select All
+              </label>
+              {selectedImages.length > 0 && (
+                <div className="flex items-center gap-4">
+                  <span className="text-sm text-[#D4AF37]">{selectedImages.length} selected</span>
+                  <button 
+                    onClick={handleBulkDelete}
+                    className="flex items-center gap-1 bg-red-500/20 text-red-400 px-3 py-1.5 rounded-lg hover:bg-red-500 hover:text-white transition text-sm"
+                  >
+                    <Trash2 className="h-4 w-4" /> Bulk Delete
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
           <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
             <SortableContext items={displayedImages.map(img => img.id)} strategy={rectSortingStrategy}>
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
                 {displayedImages.map(img => (
-                  <SortableImage key={img.id} img={img} onDelete={requestDelete} onUpdateTitle={handleUpdateTitle} onReplace={handleReplace} onChangeCategory={handleChangeCategory} />
+                  <SortableImage key={img.id} img={img} onDelete={requestDelete} onUpdateTitle={handleUpdateTitle} onReplace={handleReplace} onChangeCategory={handleChangeCategory} onToggleFeatured={handleToggleFeatured} />
                 ))}
                 {displayedImages.length === 0 && (
                   <div className="col-span-full py-12 text-center text-stone-500 border border-dashed border-white/10 rounded-2xl">
@@ -515,6 +600,12 @@ export function Admin() {
             </SortableContext>
           </DndContext>
         </section>
+
+        <VideosManager />
+        <div className="my-16 border-t border-white/10" />
+        <ClassesManager />
+        <div className="my-16 border-t border-white/10" />
+        <ProductsManager />
       </main>
 
       <AnimatePresence>

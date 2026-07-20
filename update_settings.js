@@ -4,8 +4,8 @@ const supabaseUrl = process.env.VITE_SUPABASE_URL || 'https://wywsdaktgoicdffdvx
 const supabaseKey = process.env.VITE_SUPABASE_ANON_KEY || 'sb_publishable_lo2gxawnBcIyCg68r_WBOw_g-MD1fdLV';
 const supabase = createClient(supabaseUrl, supabaseKey);
 
-async function test() {
-  const { data, error } = await supabase.from('gallery').select('subCategory').limit(1);
-  console.log("Error:", error);
+async function addColumns() {
+  // Try simple sql through REST or we can just use the provided sql script tool
+  // Let's create an sql file for it and use it.
 }
-test();
+addColumns();
