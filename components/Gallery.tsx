@@ -5,6 +5,8 @@ import { Link, useNavigate } from 'react-router-dom';
 import { supabase } from '../src/lib/supabase';
 import { useSettings } from '../contexts/SettingsContext';
 import { WhatsAppIcon } from './WhatsAppIcon';
+import { ImageWithFallback } from './ImageWithFallback';
+import { getSupabaseImageUrl } from '../src/lib/imageLoader';
 
 export type GalleryImage = {
   id: string;
@@ -37,21 +39,22 @@ export function Gallery() {
         return;
       }
       
-      const formatted = data.map(doc => {
-        let bucket = 'gallery';
-        if (doc.category === 'Signature Mehndi Collection') bucket = 'signature-mehandi';
-        else if (doc.category === 'Flower Decoration') bucket = 'flower-decoration';
-        else if (doc.category === 'Mehndi Classes') bucket = 'mehandi-classes';
+      const formatted = await Promise.all(data.map(async doc => {
+        let bucket = doc.bucket || 'gallery';
+        if (!doc.bucket) {
+          if (doc.category === 'Flower Decoration') bucket = 'flower-decoration';
+          else if (doc.category === 'Classes' || doc.category === 'Mehndi Classes') bucket = 'mehandi-classes';
+        }
         
-        const { data: publicUrlData } = supabase.storage.from(bucket).getPublicUrl(doc.image_url);
+        const url = await getSupabaseImageUrl(bucket, doc.image_url);
         
         return {
           id: doc.id,
-          url: publicUrlData.publicUrl,
+          url,
           filename: doc.image_url,
           title: doc.title,
         };
-      });
+      }));
       
       setFeaturedImages(formatted);
     };
@@ -118,7 +121,7 @@ export function Gallery() {
           {/* Cover Image */}
           <div className="h-48 md:h-64 w-full bg-[#1a0f0a] relative">
             {settings?.profileCoverUrl ? (
-              <img src={settings.profileCoverUrl} alt="Cover" className="w-full h-full object-cover opacity-60" />
+              <ImageWithFallback src={settings.profileCoverUrl} alt="Cover" className="w-full h-full object-cover opacity-60" />
             ) : (
               <div className="w-full h-full bg-gradient-to-r from-[#D4AF37]/20 to-black/50" />
             )}
@@ -129,7 +132,7 @@ export function Gallery() {
           <div className="relative px-6 pb-10 md:px-12 md:pb-12 text-center -mt-20 flex flex-col items-center">
             <div className="relative h-36 w-36 overflow-hidden rounded-full border-4 border-[#0a0604] bg-[#1a0f0a] shadow-xl mb-6">
               {settings?.profilePhotoUrl ? (
-                <img src={settings.profilePhotoUrl} alt={settings.profileName} className="h-full w-full object-cover" />
+                <ImageWithFallback src={settings.profilePhotoUrl} alt={settings.profileName} className="h-full w-full object-cover" />
               ) : (
                 <div className="flex h-full w-full items-center justify-center text-[#D4AF37]">
                   <span className="font-serif text-5xl">{settings?.profileName?.charAt(0) || 'V'}</span>
@@ -171,7 +174,7 @@ export function Gallery() {
             >
               {featuredImages.map((img, idx) => (
                 <div key={img.id} className="relative h-full min-w-full flex-shrink-0 bg-black cursor-pointer group" onClick={() => setActiveIndex(idx)}>
-                  <img src={img.url} alt={img.title || img.filename} loading="lazy" className="h-full w-full object-cover opacity-80 group-hover:opacity-100 group-hover:scale-[1.03] transition-all duration-1000 ease-out" />
+                  <ImageWithFallback src={img.url} alt={img.title || img.filename} loading="lazy" className="h-full w-full object-cover opacity-80 group-hover:opacity-100 group-hover:scale-[1.03] transition-all duration-1000 ease-out" />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent pointer-events-none transition duration-500 opacity-80 group-hover:opacity-100" />
                   <div className="absolute bottom-0 left-0 p-10 w-full translate-y-2 group-hover:translate-y-0 transition duration-500 ease-out">
                     {img.title && <h3 className="text-white font-serif text-4xl drop-shadow-xl">{img.title}</h3>}
@@ -224,7 +227,7 @@ export function Gallery() {
                   className="relative flex-none w-[220px] sm:w-[240px] aspect-[4/5] rounded-[1.5rem] overflow-hidden group snap-start bg-[#0a0604] text-left block"
                 >
                   {collection.cover_image ? (
-                    <img src={collection.cover_image} alt={collection.name} loading="lazy" className="absolute inset-0 w-full h-full object-cover opacity-70 group-hover:opacity-100 group-hover:scale-110 transition duration-1000 ease-out" />
+                    <ImageWithFallback src={collection.cover_image} alt={collection.name} loading="lazy" className="absolute inset-0 w-full h-full object-cover opacity-70 group-hover:opacity-100 group-hover:scale-110 transition duration-1000 ease-out" />
                   ) : (
                     <div className="absolute inset-0 bg-gradient-to-br from-[#D4AF37]/10 to-black/60" />
                   )}
@@ -261,7 +264,7 @@ export function Gallery() {
               <button type="button" onClick={(e) => moveZoom(-1, e)} className="absolute left-3 z-20 rounded-full bg-white/10 p-4 hover:bg-white/20 md:left-10 transition text-white"><ChevronLeft className="w-6 h-6" /></button>
             )}
             
-            <img onClick={(e) => { e.stopPropagation(); setIsZoomed((z) => !z); }} src={featuredImages[activeIndex].url} alt={featuredImages[activeIndex].title || featuredImages[activeIndex].filename} className={`max-h-[85vh] max-w-[90vw] cursor-zoom-in rounded-2xl object-contain shadow-2xl transition duration-500 ${isZoomed ? 'scale-125 cursor-zoom-out' : 'scale-100'}`} />
+            <ImageWithFallback onClick={(e) => { e.stopPropagation(); setIsZoomed((z) => !z); }} src={featuredImages[activeIndex].url} alt={featuredImages[activeIndex].title || featuredImages[activeIndex].filename} className={`max-h-[85vh] max-w-[90vw] cursor-zoom-in rounded-2xl object-contain shadow-2xl transition duration-500 ${isZoomed ? 'scale-125 cursor-zoom-out' : 'scale-100'}`} />
             
             {featuredImages.length > 1 && (
               <button type="button" onClick={(e) => moveZoom(1, e)} className="absolute right-3 z-20 rounded-full bg-white/10 p-4 hover:bg-white/20 md:right-10 transition text-white"><ChevronRight className="w-6 h-6" /></button>

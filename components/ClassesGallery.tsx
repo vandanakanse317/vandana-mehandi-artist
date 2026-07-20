@@ -3,6 +3,8 @@ import { ChevronLeft, ChevronRight, ZoomIn, ZoomOut, X, ArrowRight } from 'lucid
 import { AnimatePresence, motion } from 'motion/react';
 import { Link } from 'react-router-dom';
 import { supabase } from '../src/lib/supabase';
+import { ImageWithFallback } from './ImageWithFallback';
+import { getSupabaseImageUrl } from '../src/lib/imageLoader';
 import { useSettings } from '../contexts/SettingsContext';
 
 export type GalleryImage = {
@@ -46,23 +48,24 @@ export function ClassesGallery() {
         return;
       }
 
-      const formatImages = (data: any[]) => data.map(doc => {
-        let bucket = 'gallery';
-        if (doc.category === 'Signature Mehndi Collection') bucket = 'signature-mehandi';
-        else if (doc.category === 'Flower Decoration') bucket = 'flower-decoration';
-        else if (doc.category === 'Mehndi Classes') bucket = 'mehandi-classes';
+      const formatImages = async (data: any[]) => await Promise.all(data.map(async doc => {
+        let bucket = doc.bucket || 'gallery';
+        if (!doc.bucket) {
+          if (doc.category === 'Flower Decoration') bucket = 'flower-decoration';
+          else if (doc.category === 'Classes' || doc.category === 'Mehndi Classes') bucket = 'mehandi-classes';
+        }
         
-        const { data: publicUrlData } = supabase.storage.from(bucket).getPublicUrl(doc.image_url);
+        const url = await getSupabaseImageUrl(bucket, doc.image_url);
         
         return {
           id: doc.id,
-          url: publicUrlData.publicUrl,
+          url,
           filename: doc.image_url,
           title: doc.title,
         };
-      });
+      }));
       
-      const formattedFeatured = formatImages(featuredData || []);
+      const formattedFeatured = await formatImages(featuredData || []);
       setFeaturedImages(formattedFeatured);
       
       const featuredId = formattedFeatured[0]?.id;
@@ -70,7 +73,7 @@ export function ClassesGallery() {
       if (featuredId) {
         filteredRecent = filteredRecent.filter(d => d.id !== featuredId);
       }
-      setRecentImages(formatImages(filteredRecent.slice(0, 4)));
+      setRecentImages(await formatImages(filteredRecent.slice(0, 4)));
     };
     
     fetchImages();
@@ -131,7 +134,7 @@ export function ClassesGallery() {
               onClick={() => openLightbox(0, 'featured')}
               className="relative w-full h-[400px] md:h-[500px] rounded-[2rem] overflow-hidden group border border-white/10 bg-[#1a0f0a] text-left block"
             >
-              <img src={featuredImages[0].url} alt={featuredImages[0].title || 'Student work'} loading="lazy" className="absolute inset-0 w-full h-full object-cover opacity-80 group-hover:opacity-100 group-hover:scale-105 transition duration-1000 ease-out" />
+              <ImageWithFallback src={featuredImages[0].url} alt={featuredImages[0].title || 'Student work'} loading="lazy" className="absolute inset-0 w-full h-full object-cover opacity-80 group-hover:opacity-100 group-hover:scale-105 transition duration-1000 ease-out" />
               <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent transition duration-500 group-hover:from-black/80" />
               <div className="absolute bottom-0 left-0 p-8 w-full transform transition duration-500 ease-out">
                 <span className="inline-block px-3 py-1 bg-[#D4AF37] text-black text-xs font-bold uppercase tracking-wider rounded-full mb-3 shadow-lg">Featured Work</span>
@@ -159,7 +162,7 @@ export function ClassesGallery() {
                   onClick={() => openLightbox(idx, 'recent')}
                   className="relative flex-none w-64 h-[400px] md:h-[500px] rounded-[2rem] overflow-hidden group snap-start border border-white/10 bg-[#1a0f0a] text-left block"
                 >
-                  <img src={img.url} alt={img.title || 'Student work'} loading="lazy" className="absolute inset-0 w-full h-full object-cover opacity-70 group-hover:opacity-100 group-hover:scale-110 transition duration-1000 ease-out" />
+                  <ImageWithFallback src={img.url} alt={img.title || 'Student work'} loading="lazy" className="absolute inset-0 w-full h-full object-cover opacity-70 group-hover:opacity-100 group-hover:scale-110 transition duration-1000 ease-out" />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent transition duration-500" />
                   <div className="absolute bottom-0 left-0 p-6 w-full transform transition duration-500 ease-out group-hover:-translate-y-2">
                     {img.title && <h4 className="text-white font-serif text-lg mb-1">{img.title}</h4>}
@@ -194,7 +197,7 @@ export function ClassesGallery() {
               <p className="text-sm text-stone-500 mt-1">{activeIndex + 1} / {currentLightboxImages.length}</p>
             </div>
             {currentLightboxImages.length > 1 && <button type="button" onClick={(e) => moveZoom(-1, e)} className="absolute left-3 z-20 rounded-full bg-white/10 p-3 hover:bg-white/20 md:left-8 transition text-white"><ChevronLeft /></button>}
-            <img onClick={(e) => { e.stopPropagation(); setIsZoomed((z) => !z); }} src={currentLightboxImages[activeIndex].url} alt={currentLightboxImages[activeIndex].title || currentLightboxImages[activeIndex].filename} className={`max-h-[85vh] max-w-[90vw] cursor-zoom-in rounded-2xl object-contain shadow-2xl transition duration-500 ${isZoomed ? 'scale-125 cursor-zoom-out' : 'scale-100'}`} />
+            <ImageWithFallback onClick={(e) => { e.stopPropagation(); setIsZoomed((z) => !z); }} src={currentLightboxImages[activeIndex].url} alt={currentLightboxImages[activeIndex].title || currentLightboxImages[activeIndex].filename} className={`max-h-[85vh] max-w-[90vw] cursor-zoom-in rounded-2xl object-contain shadow-2xl transition duration-500 ${isZoomed ? 'scale-125 cursor-zoom-out' : 'scale-100'}`} />
             {currentLightboxImages.length > 1 && <button type="button" onClick={(e) => moveZoom(1, e)} className="absolute right-3 z-20 rounded-full bg-white/10 p-3 hover:bg-white/20 md:right-8 transition text-white"><ChevronRight /></button>}
             <button type="button" onClick={(e) => { e.stopPropagation(); setIsZoomed((z) => !z); }} className="absolute bottom-5 rounded-full bg-white/10 p-3 hover:bg-white/20 transition text-white">{isZoomed ? <ZoomOut /> : <ZoomIn />}</button>
           </motion.div>

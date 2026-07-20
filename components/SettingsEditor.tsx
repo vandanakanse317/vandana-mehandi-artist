@@ -1,13 +1,15 @@
-import { useState, useEffect, FormEvent } from 'react';
+import { useState, useEffect, FormEvent, ChangeEvent } from 'react';
 import { useSettings, SiteSettings } from '../contexts/SettingsContext';
 import { supabase } from '../src/lib/supabase';
-import { Save, CheckCircle } from 'lucide-react';
+import { Save, CheckCircle, Image as ImageIcon, Upload, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
 export function SettingsEditor() {
   const { settings, loading } = useSettings();
   const [formData, setFormData] = useState<SiteSettings | null>(null);
   const [saving, setSaving] = useState(false);
+  const [uploadingCover, setUploadingCover] = useState(false);
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [success, setSuccess] = useState('');
   const [error, setError] = useState('');
 
@@ -21,6 +23,40 @@ export function SettingsEditor() {
 
   const handleChange = (field: keyof SiteSettings, value: string) => {
     setFormData(prev => prev ? { ...prev, [field]: value } : null);
+  };
+
+  const handleFileUpload = async (e: ChangeEvent<HTMLInputElement>, field: 'profileCoverUrl' | 'profilePhotoUrl') => {
+    if (!e.target.files || e.target.files.length === 0) return;
+    const file = e.target.files[0];
+    
+    if (field === 'profileCoverUrl') setUploadingCover(true);
+    else setUploadingPhoto(true);
+    
+    setError('');
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${Math.random().toString(36).substring(2, 15)}_${Date.now()}.${fileExt}`;
+      const filePath = `settings/${fileName}`;
+      
+      const { error: uploadError } = await supabase.storage
+        .from('gallery')
+        .upload(filePath, file, { cacheControl: '3600', upsert: false });
+        
+      if (uploadError) throw uploadError;
+      
+      const { data } = supabase.storage.from('gallery').getPublicUrl(filePath);
+      handleChange(field, data.publicUrl);
+      
+    } catch (err: any) {
+      setError(`Upload failed: ${err.message}`);
+    } finally {
+      if (field === 'profileCoverUrl') setUploadingCover(false);
+      else setUploadingPhoto(false);
+    }
+  };
+
+  const removeImage = (field: 'profileCoverUrl' | 'profilePhotoUrl') => {
+    handleChange(field, '');
   };
 
   const handleSave = async (e: FormEvent) => {
@@ -178,14 +214,30 @@ export function SettingsEditor() {
           </div>
 
           <div>
-            <label className="block text-sm text-stone-400 mb-1">Profile Cover URL</label>
-            <input 
-              type="text" 
-              value={formData.profileCoverUrl || ''} 
-              onChange={e => handleChange('profileCoverUrl', e.target.value)} 
-              placeholder="https://..."
-              className="w-full bg-black/30 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-[#D4AF37]" 
-            />
+            <label className="block text-sm text-stone-400 mb-2">Profile Cover Photo</label>
+            <div className="flex gap-4">
+              {formData.profileCoverUrl ? (
+                <div className="relative w-40 h-24 rounded-xl overflow-hidden border border-white/20 bg-black/50 shrink-0">
+                  <ImageWithFallback src={formData.profileCoverUrl} alt="Cover Preview" className="w-full h-full object-cover" />
+                  <button type="button" onClick={() => removeImage('profileCoverUrl')} className="absolute top-1 right-1 bg-red-500 p-1.5 rounded-full text-white hover:bg-red-600 transition shadow-lg">
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+              ) : (
+                <label className="w-40 h-24 rounded-xl border-2 border-dashed border-white/20 hover:border-[#D4AF37] flex flex-col items-center justify-center cursor-pointer text-stone-400 hover:text-[#D4AF37] transition bg-black/30 shrink-0">
+                  {uploadingCover ? (
+                    <span className="text-xs">Uploading...</span>
+                  ) : (
+                    <>
+                      <Upload className="h-6 w-6 mb-1" />
+                      <span className="text-xs">Upload Cover</span>
+                    </>
+                  )}
+                  <input type="file" accept="image/*" onChange={(e) => handleFileUpload(e, 'profileCoverUrl')} className="hidden" disabled={uploadingCover} />
+                </label>
+              )}
+            </div>
+            <p className="text-xs text-stone-500 mt-2">Recommended: Landscape format (e.g. 1920x1080)</p>
           </div>
           <div>
             <label className="block text-sm text-stone-400 mb-1">WhatsApp Number (For Gallery)</label>
@@ -198,14 +250,30 @@ export function SettingsEditor() {
             />
           </div>
           <div>
-            <label className="block text-sm text-stone-400 mb-1">Profile Photo URL</label>
-            <input 
-              type="text" 
-              value={formData.profilePhotoUrl || ''} 
-              onChange={e => handleChange('profilePhotoUrl', e.target.value)} 
-              placeholder="https://..."
-              className="w-full bg-black/30 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-[#D4AF37]" 
-            />
+            <label className="block text-sm text-stone-400 mb-2">Profile Photo</label>
+            <div className="flex gap-4">
+              {formData.profilePhotoUrl ? (
+                <div className="relative w-24 h-24 rounded-full overflow-hidden border border-white/20 bg-black/50 shrink-0">
+                  <ImageWithFallback src={formData.profilePhotoUrl} alt="Profile Preview" className="w-full h-full object-cover" />
+                  <button type="button" onClick={() => removeImage('profilePhotoUrl')} className="absolute top-1 right-1 bg-red-500 p-1 rounded-full text-white hover:bg-red-600 transition shadow-lg">
+                    <X className="h-3 w-3" />
+                  </button>
+                </div>
+              ) : (
+                <label className="w-24 h-24 rounded-full border-2 border-dashed border-white/20 hover:border-[#D4AF37] flex flex-col items-center justify-center cursor-pointer text-stone-400 hover:text-[#D4AF37] transition bg-black/30 shrink-0">
+                  {uploadingPhoto ? (
+                    <span className="text-xs">Uploading...</span>
+                  ) : (
+                    <>
+                      <Upload className="h-5 w-5 mb-1" />
+                      <span className="text-[10px]">Upload Photo</span>
+                    </>
+                  )}
+                  <input type="file" accept="image/*" onChange={(e) => handleFileUpload(e, 'profilePhotoUrl')} className="hidden" disabled={uploadingPhoto} />
+                </label>
+              )}
+            </div>
+            <p className="text-xs text-stone-500 mt-2">Recommended: Square format (e.g. 500x500)</p>
           </div>
           <div>
             <label className="block text-sm text-stone-400 mb-1">Short Bio</label>

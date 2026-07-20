@@ -5,6 +5,8 @@ import { Link, useLocation } from 'react-router-dom';
 import { supabase } from '../src/lib/supabase';
 import { useSettings } from '../contexts/SettingsContext';
 import { Logo } from './Logo';
+import { ImageWithFallback } from './ImageWithFallback';
+import { getSupabaseImageUrl } from '../src/lib/imageLoader';
 
 export type GalleryImage = {
   id: string;
@@ -28,9 +30,9 @@ export function FullGalleryPage({ type = 'portfolio' }: { type?: 'portfolio' | '
   // Custom categories setup
   const categories = settings?.portfolio_collections 
     ? settings.portfolio_collections.filter(c => c.name !== 'All Designs' && c.name !== 'Latest Designs').map(c => c.name)
-    : ['Bridal Collection', 'Arabic Collection', 'Traditional Collection', 'Flower Decoration'];
+    : ['All Mehandi', 'Flower Decoration', 'Bridal Collection'];
 
-  const defaultCategory = initialCollection || categories[0] || 'Bridal Collection';
+  const defaultCategory = initialCollection || categories[0] || 'All Mehandi';
   const [activeCollection, setActiveCollection] = useState(type === 'classes' ? 'Classes' : defaultCategory);
   const [page, setPage] = useState(0);
   const [hasMore, setHasMore] = useState(true);
@@ -73,22 +75,23 @@ export function FullGalleryPage({ type = 'portfolio' }: { type?: 'portfolio' | '
       
       if (data.length < PAGE_SIZE) setHasMore(false);
       
-      const formatted = data.map(doc => {
-        let bucket = 'gallery';
-        if (doc.category === 'Signature Mehndi Collection') bucket = 'signature-mehandi';
-        else if (doc.category === 'Flower Decoration') bucket = 'flower-decoration';
-        else if (doc.category === 'Mehndi Classes') bucket = 'mehandi-classes';
+      const formatted = await Promise.all(data.map(async doc => {
+        let bucket = doc.bucket || 'gallery';
+        if (!doc.bucket) {
+          if (doc.category === 'Flower Decoration') bucket = 'flower-decoration';
+          else if (doc.category === 'Classes' || doc.category === 'Mehndi Classes') bucket = 'mehandi-classes';
+        }
         
-        const { data: publicUrlData } = supabase.storage.from(bucket).getPublicUrl(doc.image_url);
+        const url = await getSupabaseImageUrl(bucket, doc.image_url);
         
         return {
           id: doc.id,
-          url: publicUrlData.publicUrl,
+          url,
           category: doc.category,
           filename: doc.image_url,
           title: doc.title,
         };
-      });
+      }));
       
       setImages(prev => {
         const existingIds = new Set(prev.map(p => p.id));
@@ -176,7 +179,7 @@ export function FullGalleryPage({ type = 'portfolio' }: { type?: 'portfolio' | '
               onClick={() => setActiveIndex(index)}
               className="group relative block w-full aspect-[4/5] overflow-hidden rounded-[1.5rem] border border-[#D4AF37]/20 text-left bg-[#1a0f0a] hover:border-[#D4AF37]/60 transition duration-500"
             >
-              <img src={item.url} alt={item.filename} loading="lazy" className="w-full h-full object-cover transition duration-700 group-hover:scale-105 opacity-90 group-hover:opacity-100" />
+              <ImageWithFallback src={item.url} alt={item.filename} loading="lazy" className="w-full h-full object-cover transition duration-700 group-hover:scale-105 opacity-90 group-hover:opacity-100" />
               <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/0 to-transparent opacity-0 transition duration-300 group-hover:opacity-100" />
               <div className="absolute inset-x-0 bottom-0 translate-y-4 p-5 opacity-0 transition duration-300 group-hover:translate-y-0 group-hover:opacity-100 flex flex-col justify-end">
                 <ZoomIn className="mb-2 h-6 w-6 text-white" />
@@ -221,7 +224,7 @@ export function FullGalleryPage({ type = 'portfolio' }: { type?: 'portfolio' | '
               <button type="button" onClick={(event) => moveZoom(-1, event)} className="absolute left-3 z-20 rounded-full bg-white/10 p-3 hover:bg-white/20 md:left-8 transition text-white"><ChevronLeft /></button>
             )}
             
-            <img onClick={(event) => { event.stopPropagation(); setIsZoomed((zoomed) => !zoomed); }} src={images[activeIndex].url} alt={images[activeIndex].title || images[activeIndex].filename} className={`max-h-[85vh] max-w-[90vw] cursor-zoom-in rounded-2xl object-contain shadow-2xl transition duration-500 ${isZoomed ? 'scale-125 cursor-zoom-out' : 'scale-100'}`} />
+            <ImageWithFallback onClick={(event) => { event.stopPropagation(); setIsZoomed((zoomed) => !zoomed); }} src={images[activeIndex].url} alt={images[activeIndex].title || images[activeIndex].filename} className={`max-h-[85vh] max-w-[90vw] cursor-zoom-in rounded-2xl object-contain shadow-2xl transition duration-500 ${isZoomed ? 'scale-125 cursor-zoom-out' : 'scale-100'}`} />
             
             {images.length > 1 && (
               <button type="button" onClick={(event) => moveZoom(1, event)} className="absolute right-3 z-20 rounded-full bg-white/10 p-3 hover:bg-white/20 md:right-8 transition text-white"><ChevronRight /></button>

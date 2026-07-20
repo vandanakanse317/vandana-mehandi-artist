@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
+import { ImageWithFallback } from './ImageWithFallback';
 
 function SortableCollection({ col, index, handleChange, removeCollection }: any) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: col.id });
@@ -59,7 +60,7 @@ function SortableCollection({ col, index, handleChange, removeCollection }: any)
       </div>
       {col.cover_image && (
         <div className="w-16 h-16 rounded-lg overflow-hidden shrink-0 border border-white/20 hidden md:block bg-black">
-          <img src={col.cover_image} alt="Preview" className="w-full h-full object-cover" />
+          <ImageWithFallback src={col.cover_image} alt="Preview" className="w-full h-full object-cover" />
         </div>
       )}
       <button 

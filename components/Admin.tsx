@@ -3,6 +3,8 @@ import { LogOut, Upload, Image as ImageIcon, X, CheckCircle, Key, Trash2 } from 
 import { motion, AnimatePresence } from 'motion/react';
 import imageCompression from 'browser-image-compression';
 import { GalleryImage } from './Gallery';
+import { ImageWithFallback } from './ImageWithFallback';
+import { getSupabaseImageUrl } from '../src/lib/imageLoader';
 import {
   DndContext,
   closestCenter,
@@ -31,7 +33,7 @@ function SortableImage({ img, onDelete, onUpdateTitle, onReplace, onChangeCatego
 
   return (
     <div ref={setNodeRef} style={style} className="relative group rounded-xl overflow-hidden border border-white/10 bg-black/50 aspect-square">
-      <img src={img.url} alt={img.filename} className="w-full h-full object-cover" />
+      <ImageWithFallback src={img.url} alt={img.filename} className="w-full h-full object-cover" />
       <div className={`absolute top-2 left-2 z-20 transition-opacity ${isSelected ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
         <input 
           type="checkbox" 
@@ -100,8 +102,8 @@ const MEHNDI_CLASSES_ALBUMS = ['Batches', 'Student Practice', 'Student Mehndi'];
 
 const getBucketForCategory = (category: string) => {
   switch (category) {
-    case 'Signature Mehndi Collection': return 'signature-mehandi';
     case 'Flower Decoration': return 'flower-decoration';
+    case 'Classes': return 'mehandi-classes';
     case 'Mehndi Classes': return 'mehandi-classes';
     default: return 'gallery';
   }
@@ -134,7 +136,7 @@ export function Admin() {
     try {
       const imgsToDelete = images.filter(img => selectedImages.includes(img.id));
       for (const img of imgsToDelete) {
-        let bucket = getBucketForCategory(img.category);
+        let bucket = img.bucket || getBucketForCategory(img.category);
         await supabase.storage.from(bucket).remove([img.filename]);
         await supabase.from('gallery').delete().eq('id', img.id);
       }
@@ -194,13 +196,14 @@ export function Admin() {
   const fetchGallery = async () => {
     const { data, error } = await supabase.from('gallery').select('*').order('created_at', { ascending: false });
     if (!error && data) {
-      const formatted = data.map(doc => {
-        const bucket = getBucketForCategory(doc.category);
-        const { data: publicUrlData } = supabase.storage.from(bucket).getPublicUrl(doc.image_url);
+      const formatted = await Promise.all(data.map(async doc => {
+        const bucket = doc.bucket || getBucketForCategory(doc.category);
+        const url = await getSupabaseImageUrl(bucket, doc.image_url);
         return {
           id: doc.id,
-          url: publicUrlData.publicUrl,
+          url,
           category: doc.category,
+          bucket: bucket,
           subCategory: doc.subCategory || undefined,
           filename: doc.image_url,
           title: doc.title,
@@ -208,7 +211,7 @@ export function Admin() {
           is_featured: doc.is_featured !== false,
           uploadDate: doc.created_at,
         };
-      });
+      }));
       setImages(formatted as any);
     }
   };
@@ -277,6 +280,7 @@ export function Admin() {
         
         const { error: dbError } = await supabase.from('gallery').insert([{
           category: selectedCat,
+          bucket: bucket,
           image_url: storagePath,
           title: '',
         }]);
@@ -307,7 +311,7 @@ export function Admin() {
     try {
       const img = images.find(i => i.id === id);
       if (!img) throw new Error('Image not found');
-      const bucket = getBucketForCategory(img.category);
+      const bucket = img.bucket || getBucketForCategory(img.category);
 
       const options = { maxSizeMB: 1, maxWidthOrHeight: 1920, useWebWorker: false };
       const compressedFile = await imageCompression(file as File, options);
@@ -342,7 +346,7 @@ export function Admin() {
     try {
       const img = images.find(img => img.id === id);
       if (img) {
-        const bucket = getBucketForCategory(img.category);
+        const bucket = img.bucket || getBucketForCategory(img.category);
         const { error: storageError } = await supabase.storage.from(bucket).remove([img.filename]);
         if (storageError) throw new Error(`Storage Error (${bucket}): ${storageError.message}. Make sure the bucket has an RLS policy for deletes.`);
       }
@@ -519,7 +523,7 @@ export function Admin() {
                 <div className="flex flex-wrap gap-4">
                   {previewUrls.map((url, i) => (
                     <div key={i} className="relative w-24 h-24 rounded-lg overflow-hidden border border-white/10">
-                      <img src={url} alt="preview" className="w-full h-full object-cover" />
+                      <ImageWithFallback src={url} alt="preview" className="w-full h-full object-cover" />
                       <button onClick={() => {
                         setFilesToUpload(prev => prev.filter((_, idx) => idx !== i));
                         setPreviewUrls(prev => prev.filter((_, idx) => idx !== i));

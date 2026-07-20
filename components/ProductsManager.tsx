@@ -44,11 +44,11 @@ function SortableProduct({ product, handleEdit, handleDelete, toggleFeatured, to
             <ImageIcon className="h-10 w-10" />
           </div>
         )}
-        <div className="absolute top-2 right-2 flex gap-2 opacity-0 group-hover:opacity-100 transition">
-          <button onClick={() => handleEdit(product)} className="bg-white/10 p-2 rounded-full text-white hover:bg-white/20 backdrop-blur-md">
+        <div className="absolute top-2 right-2 flex gap-2">
+          <button onClick={() => handleEdit(product)} className="bg-black/60 border border-white/20 p-2 rounded-full text-white hover:bg-[#D4AF37] hover:text-black hover:border-transparent transition backdrop-blur-md shadow-lg" title="Edit Product">
             <Edit2 className="h-4 w-4" />
           </button>
-          <button onClick={() => handleDelete(product)} className="bg-red-500/80 p-2 rounded-full text-white hover:bg-red-500 backdrop-blur-md">
+          <button onClick={() => handleDelete(product)} className="bg-black/60 border border-red-500/30 p-2 rounded-full text-red-400 hover:bg-red-500 hover:text-white hover:border-transparent transition backdrop-blur-md shadow-lg" title="Delete Product">
             <Trash2 className="h-4 w-4" />
           </button>
         </div>
@@ -265,10 +265,15 @@ export function ProductsManager() {
       if (product.image_urls && product.image_urls.length > 0) {
         await supabase.storage.from('products').remove(product.image_urls);
       }
-      await supabase.from('products').delete().eq('id', product.id);
+      const { error: err } = await supabase.from('products').delete().eq('id', product.id);
+      if (err) throw err;
+      
       setProducts(prev => prev.filter(p => p.id !== product.id));
+      setSuccess('Product deleted successfully');
+      setTimeout(() => setSuccess(''), 3000);
     } catch (err: any) {
-      alert("Failed to delete: " + err.message);
+      setError("Failed to delete: " + err.message);
+      setTimeout(() => setError(''), 3000);
     }
   };
 

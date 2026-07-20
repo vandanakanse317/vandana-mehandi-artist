@@ -4,6 +4,8 @@ import { CheckCircle, ChevronDown, ChevronUp, Star, Phone, MessageCircle } from 
 import { motion, AnimatePresence } from 'motion/react';
 import { Link } from 'react-router-dom';
 import { useSettings } from '../contexts/SettingsContext';
+import { getSupabaseImageUrl } from '../src/lib/imageLoader';
+import { ImageWithFallback } from './ImageWithFallback';
 
 export type ClassesInfo = {
   id: number;
@@ -38,10 +40,30 @@ export function Classes() {
     return () => { supabase.removeChannel(channel); };
   }, []);
 
+  const [bannerUrl, setBannerUrl] = useState<string>('');
+
   const fetchInfo = async () => {
     try {
       const { data, error } = await supabase.from('classes_info').select('*').eq('id', 1).single();
       if (data) {
+        if (data.banner_image) {
+          const url = await getSupabaseImageUrl('classes', data.banner_image);
+          setBannerUrl(url);
+        }
+        
+        if (data.gallery) {
+          data.gallery = await Promise.all(data.gallery.map(async (img: any) => ({
+            ...img,
+            resolvedUrl: await getSupabaseImageUrl('classes', img.url)
+          })));
+        }
+        if (data.reviews) {
+          data.reviews = await Promise.all(data.reviews.map(async (rev: any) => ({
+            ...rev,
+            resolvedPhoto: rev.photo ? await getSupabaseImageUrl('classes', rev.photo) : null
+          })));
+        }
+
         setInfo(data);
       }
     } catch (e) {
@@ -54,7 +76,6 @@ export function Classes() {
   if (loading) return null;
   if (!info) return null;
 
-  const bannerUrl = info.banner_image ? supabase.storage.from('classes').getPublicUrl(info.banner_image).data.publicUrl : '';
   const featuredStudent = info.gallery?.find(img => img.is_featured) || info.gallery?.[0];
   const galleryImages = info.gallery?.filter(img => img.id !== featuredStudent?.id) || [];
 
@@ -70,7 +91,7 @@ export function Classes() {
         <div className="relative rounded-[2.5rem] overflow-hidden mb-16 bg-[#1a0f0a] border border-white/10 shadow-2xl">
           {bannerUrl && (
             <div className="absolute inset-0 opacity-40">
-              <img src={bannerUrl} alt="Mehndi Classes" className="w-full h-full object-cover" />
+              <ImageWithFallback src={bannerUrl} alt="Mehndi Classes" className="w-full h-full object-cover" />
               <div className="absolute inset-0 bg-gradient-to-r from-[#0a0604] via-[#0a0604]/80 to-transparent" />
             </div>
           )}
@@ -164,13 +185,13 @@ export function Classes() {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               {featuredStudent && (
                 <div className="lg:col-span-2 relative aspect-square lg:aspect-auto lg:h-[400px] rounded-3xl overflow-hidden border border-white/10">
-                  <img src={supabase.storage.from('classes').getPublicUrl(featuredStudent.url).data.publicUrl} alt="Featured Student Work" className="w-full h-full object-cover hover:scale-105 transition duration-700" />
+                  <ImageWithFallback src={featuredStudent.resolvedUrl} alt="Featured Student Work" className="w-full h-full object-cover hover:scale-105 transition duration-700" />
                 </div>
               )}
               <div className="flex gap-4 overflow-x-auto lg:grid lg:grid-cols-2 lg:gap-6 pb-4 lg:pb-0 scrollbar-hide">
                 {galleryImages.slice(0, 4).map((img) => (
                   <div key={img.id} className="relative w-48 lg:w-full aspect-square rounded-3xl overflow-hidden border border-white/10 flex-shrink-0">
-                    <img src={supabase.storage.from('classes').getPublicUrl(img.url).data.publicUrl} alt="Student Work" className="w-full h-full object-cover hover:scale-105 transition duration-700" />
+                    <ImageWithFallback src={img.resolvedUrl} alt="Student Work" className="w-full h-full object-cover hover:scale-105 transition duration-700" />
                   </div>
                 ))}
               </div>
@@ -195,7 +216,7 @@ export function Classes() {
                   </p>
                   <div className="flex items-center gap-4 mt-auto">
                     {review.photo ? (
-                       <img src={supabase.storage.from('classes').getPublicUrl(review.photo).data.publicUrl} alt={review.name} className="w-12 h-12 rounded-full object-cover border border-[#D4AF37]/30" />
+                       <ImageWithFallback src={review.resolvedPhoto} alt={review.name} className="w-12 h-12 rounded-full object-cover border border-[#D4AF37]/30" />
                     ) : (
                       <div className="w-12 h-12 rounded-full bg-white/10 flex items-center justify-center text-white font-medium border border-white/10">{review.name.charAt(0)}</div>
                     )}
