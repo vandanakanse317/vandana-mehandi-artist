@@ -1,5 +1,6 @@
 import { useState, useEffect, FormEvent, ChangeEvent } from 'react';
 import { useSettings, SiteSettings } from '../contexts/SettingsContext';
+import { ImageWithFallback } from './ImageWithFallback';
 import { supabase } from '../src/lib/supabase';
 import { Save, CheckCircle, Image as ImageIcon, Upload, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';

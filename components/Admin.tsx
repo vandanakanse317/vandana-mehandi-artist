@@ -196,7 +196,7 @@ export function Admin() {
   const fetchGallery = async () => {
     const { data, error } = await supabase.from('gallery').select('*').order('created_at', { ascending: false });
     if (!error && data) {
-      const formatted = await Promise.all(data.map(async doc => {
+      const formatted = await Promise.all(data?.map(async doc => {
         const bucket = doc.bucket || getBucketForCategory(doc.category);
         const url = await getSupabaseImageUrl(bucket, doc.image_url);
         return {
@@ -593,7 +593,7 @@ export function Admin() {
             <SortableContext items={displayedImages.map(img => img.id)} strategy={rectSortingStrategy}>
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
                 {displayedImages.map(img => (
-                  <SortableImage key={img.id} img={img} onDelete={requestDelete} onUpdateTitle={handleUpdateTitle} onReplace={handleReplace} onChangeCategory={handleChangeCategory} onToggleFeatured={handleToggleFeatured} />
+                  <SortableImage key={img.id} img={img} onDelete={requestDelete} onUpdateTitle={handleUpdateTitle} onReplace={handleReplace} onChangeCategory={handleChangeCategory} onToggleFeatured={handleToggleFeatured} categories={CATEGORIES} isSelected={selectedImages.includes(img.id)} onToggleSelect={handleToggleSelect} />
                 ))}
                 {displayedImages.length === 0 && (
                   <div className="col-span-full py-12 text-center text-stone-500 border border-dashed border-white/10 rounded-2xl">

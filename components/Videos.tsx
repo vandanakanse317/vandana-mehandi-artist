@@ -34,7 +34,7 @@ export function Videos() {
         return;
       }
       
-      const formatted = data.map(doc => {
+      const formatted = data?.map(doc => {
         // Assume URLs are stored properly. If they are in the videos bucket:
         const { data: thumbData } = supabase.storage.from('videos').getPublicUrl(doc.thumbnail_url);
         const { data: videoData } = supabase.storage.from('videos').getPublicUrl(doc.video_url);

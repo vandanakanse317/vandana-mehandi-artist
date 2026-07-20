@@ -188,7 +188,7 @@ export function ClassesManager() {
             </button>
           </div>
           <div className="space-y-2 max-h-64 overflow-y-auto pr-2">
-            {info.highlights.map((hl, idx) => (
+            {info.highlights?.map((hl, idx) => (
               <div key={hl.id} className="flex gap-2">
                 <input type="text" value={hl.text} onChange={e => {
                   const newHls = [...info.highlights];
@@ -213,7 +213,7 @@ export function ClassesManager() {
             </button>
           </div>
           <div className="space-y-4 max-h-64 overflow-y-auto pr-2">
-            {info.curriculum.map((curr, idx) => (
+            {info.curriculum?.map((curr, idx) => (
               <div key={curr.id} className="bg-black/30 p-4 rounded-xl border border-white/10 space-y-3 relative group">
                 <button onClick={() => setInfo({...info, curriculum: info.curriculum.filter((_, i) => i !== idx)})} className="absolute top-2 right-2 p-1.5 text-red-400 hover:bg-red-400/10 rounded-lg transition opacity-0 group-hover:opacity-100">
                   <Trash2 className="w-4 h-4" />
@@ -249,12 +249,12 @@ export function ClassesManager() {
             </label>
           </div>
           <div className="grid grid-cols-3 gap-3">
-            {info.gallery.map((img, idx) => (
+            {info.gallery?.map((img, idx) => (
               <div key={img.id} className="relative aspect-square rounded-xl overflow-hidden border border-white/20 group">
                 <img src={supabase.storage.from('classes').getPublicUrl(img.url).data.publicUrl} alt="Gallery" className="w-full h-full object-cover" />
                 <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition flex flex-col justify-center items-center gap-2">
                   <button onClick={() => {
-                    const newGal = info.gallery.map((g, i) => ({ ...g, is_featured: i === idx }));
+                    const newGal = info.gallery?.map((g, i) => ({ ...g, is_featured: i === idx }));
                     setInfo({...info, gallery: newGal});
                   }} className={`text-xs px-2 py-1 rounded-full ${img.is_featured ? 'bg-[#D4AF37] text-black' : 'bg-white/20 text-white hover:bg-white/30'}`}>
                     {img.is_featured ? 'Featured' : 'Make Featured'}
@@ -278,7 +278,7 @@ export function ClassesManager() {
             </button>
           </div>
           <div className="space-y-4 max-h-[28rem] overflow-y-auto pr-2">
-            {info.reviews.map((rev, idx) => (
+            {info.reviews?.map((rev, idx) => (
               <div key={rev.id} className="bg-black/30 p-4 rounded-xl border border-white/10 space-y-3 relative group">
                 <button onClick={() => setInfo({...info, reviews: info.reviews.filter((_, i) => i !== idx)})} className="absolute top-2 right-2 p-1.5 text-red-400 hover:bg-red-400/10 rounded-lg transition opacity-0 group-hover:opacity-100">
                   <Trash2 className="w-4 h-4" />

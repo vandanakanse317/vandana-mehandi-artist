@@ -39,7 +39,7 @@ export function Gallery() {
         return;
       }
       
-      const formatted = await Promise.all(data.map(async doc => {
+      const formatted = await Promise.all(data?.map(async doc => {
         let bucket = doc.bucket || 'gallery';
         if (!doc.bucket) {
           if (doc.category === 'Flower Decoration') bucket = 'flower-decoration';
@@ -217,10 +217,10 @@ export function Gallery() {
         )}
 
         {/* Collections Horizontal Scroll - Max 4 */}
-        {settings?.portfolio_collections && settings.portfolio_collections.filter(c => c.enabled !== false).length > 0 && (
+        {settings?.portfolio_collections && settings.portfolio_collections?.filter(c => c.enabled !== false).length > 0 && (
           <div className="mb-10 max-w-6xl mx-auto">
             <div className="flex overflow-x-auto gap-4 pb-6 snap-x snap-mandatory scrollbar-hide -mx-4 px-4 sm:mx-0 sm:px-0">
-              {settings.portfolio_collections.filter(c => c.enabled !== false).slice(0, 4).map((collection) => (
+              {settings.portfolio_collections?.filter(c => c.enabled !== false).slice(0, 4).map((collection) => (
                 <button 
                   key={collection.id} 
                   onClick={() => navigate(`/gallery?collection=${encodeURIComponent(collection.name)}`)}

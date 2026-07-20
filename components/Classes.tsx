@@ -52,13 +52,13 @@ export function Classes() {
         }
         
         if (data.gallery) {
-          data.gallery = await Promise.all(data.gallery.map(async (img: any) => ({
+          data.gallery = await Promise.all(data.gallery?.map(async (img: any) => ({
             ...img,
             resolvedUrl: await getSupabaseImageUrl('classes', img.url)
           })));
         }
         if (data.reviews) {
-          data.reviews = await Promise.all(data.reviews.map(async (rev: any) => ({
+          data.reviews = await Promise.all(data.reviews?.map(async (rev: any) => ({
             ...rev,
             resolvedPhoto: rev.photo ? await getSupabaseImageUrl('classes', rev.photo) : null
           })));
@@ -189,7 +189,7 @@ export function Classes() {
                 </div>
               )}
               <div className="flex gap-4 overflow-x-auto lg:grid lg:grid-cols-2 lg:gap-6 pb-4 lg:pb-0 scrollbar-hide">
-                {galleryImages.slice(0, 4).map((img) => (
+                {galleryImages.slice(0, 4)?.map((img) => (
                   <div key={img.id} className="relative w-48 lg:w-full aspect-square rounded-3xl overflow-hidden border border-white/10 flex-shrink-0">
                     <ImageWithFallback src={img.resolvedUrl} alt="Student Work" className="w-full h-full object-cover hover:scale-105 transition duration-700" />
                   </div>
@@ -204,10 +204,10 @@ export function Classes() {
           <div className="mt-24">
             <h3 className="text-3xl font-serif text-white mb-10 text-center">Student Reviews</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {info.reviews.map((review) => (
+              {info.reviews?.map((review) => (
                 <div key={review.id} className="bg-[#1a0f0a] border border-white/10 p-8 rounded-3xl relative">
                   <div className="flex gap-1 mb-6">
-                    {[...Array(review.rating)].map((_, i) => (
+                    {[...Array(review.rating)]?.map((_, i) => (
                       <Star key={i} className="w-4 h-4 fill-[#D4AF37] text-[#D4AF37]" />
                     ))}
                   </div>

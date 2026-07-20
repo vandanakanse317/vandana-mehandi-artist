@@ -33,7 +33,7 @@ export function VideosPage() {
         return;
       }
       
-      const formatted = data.map(doc => {
+      const formatted = data?.map(doc => {
         const { data: thumbData } = supabase.storage.from('videos').getPublicUrl(doc.thumbnail_url);
         const { data: videoData } = supabase.storage.from('videos').getPublicUrl(doc.video_url);
         return {

@@ -75,7 +75,7 @@ export function FullGalleryPage({ type = 'portfolio' }: { type?: 'portfolio' | '
       
       if (data.length < PAGE_SIZE) setHasMore(false);
       
-      const formatted = await Promise.all(data.map(async doc => {
+      const formatted = await Promise.all(data?.map(async doc => {
         let bucket = doc.bucket || 'gallery';
         if (!doc.bucket) {
           if (doc.category === 'Flower Decoration') bucket = 'flower-decoration';
